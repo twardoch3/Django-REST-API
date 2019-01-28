@@ -31,5 +31,6 @@ urlpatterns = [
     url(r'^cinemas/(?P<pk>[0-9]+)/$', CinemaView.as_view(), name='cinema-detail'),
 
     url(r'^screening/$', ScreeningListView.as_view(), name='screening-list'),
+    url(r'^screening/(?P<pk>[0-9]+)/$', ScreeningView.as_view(), name='screening-detail'),
 
 ]
