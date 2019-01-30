@@ -6,6 +6,7 @@ from faker import Faker
 from datetime import datetime, timedelta
 from django.utils import timezone
 
+
 class Faker_Temp_Data():
 
     faker = Faker("pl_PL")
@@ -15,15 +16,14 @@ class Faker_Temp_Data():
             Person.objects.create(name=self.faker.name())
         for _ in range(randint(5,10)):
             self._create_fake_movie()
-        m = Movie.objects.all()
         for _ in range(randint(2,5)):
             nc = Cinema.objects.create(name='kino ' + self.faker.word(), city=self.faker.city())
             dt = timezone.make_aware(datetime.today(), timezone.get_current_timezone())
-            Screening.objects.create(cinema=nc, movie=self._random_movie(), date=dt + timedelta(randint(1,5)))
-            Screening.objects.create(cinema=nc, movie=self._random_movie(), date=dt + timedelta(randint(1,5)))
-
+            movies = sample(list(Movie.objects.all()), randint(1,5))
+            for m in movies:
+                Screening.objects.create(cinema=nc, movie=m, date=dt + timedelta(randint(1,5)))
+        # no movies
         Cinema.objects.create(name='kino ' + self.faker.word(), city=self.faker.city())
-
 
     def _random_movie(self):
         movies = Movie.objects.all()
@@ -90,15 +90,14 @@ class CinemaTestCase(APITestCase):
     def setUp(self):
         print('Test_1_Cinemas')
         CinemaTestCase.fake_data._fake_cinema_db()  #self albo CinemaTestCase
-        print(Person.objects.all())
-        print(Movie.objects.all())
+        #print(Person.objects.all())
+        #print(Movie.objects.all())
 
 
     def test_get_cinemas_list(self):
         response = self.client.get("/cinemas/", format='json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Cinema.objects.count(), len(response.data))
-        print(response.data)
         print(Cinema.objects.count())
         print('get')
 
@@ -110,7 +109,7 @@ class CinemaTestCase(APITestCase):
         self.assertEqual(response.data['name'], c1.name)
         self.assertEqual(response.data['city'], c1.city)
         print('detail')
-        print(c1)
+
 
 
     def test_add_cinema(self):
@@ -119,16 +118,12 @@ class CinemaTestCase(APITestCase):
         response = self.client.post("/cinemas/", new_cinema, format='json')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Cinema.objects.count(), cinemas_before + 1)
+        for key, val in new_cinema.items():
+            self.assertIn(key, response.data)
+            self.assertEqual(response.data[key], val)
         print(response.data)
         print(new_cinema)
         print('add')
-        for key, val in new_cinema.items():
-            self.assertIn(key, response.data)
-            if isinstance(val, list):
-                # Compare contents regardless of their order
-                self.assertCountEqual(response.data[key], val)
-            else:
-                self.assertEqual(response.data[key], val)
 
     def test_delete_cinema(self):
         response = self.client.delete("/cinemas/1/", {}, format='json')
@@ -150,7 +145,10 @@ class CinemaTestCase(APITestCase):
         print('update')
         print(cinema_obj.movies.all())
 
-
+    def test_non_existing_cinema_404(self):
+        response = self.client.get("/cinemas/1000/", {}, format='json')
+        self.assertEqual(response.status_code, 404)
+        print('404')
 
 
 # class ScreeningTestCase(APITestCase):
