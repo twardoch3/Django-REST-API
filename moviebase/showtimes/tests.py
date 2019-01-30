@@ -11,24 +11,26 @@ class Faker_Temp_Data():
     faker = Faker("pl_PL")
 
     def _fake_cinema_db(self):
-        for _ in range(2):
+        for _ in range(randint(5,10)):
             Person.objects.create(name=self.faker.name())
-        for _ in range(2):
+        for _ in range(randint(5,10)):
             self._create_fake_movie()
         m = Movie.objects.all()
-        for _ in range(2):
+        for _ in range(randint(2,5)):
             nc = Cinema.objects.create(name='kino ' + self.faker.word(), city=self.faker.city())
             dt = timezone.make_aware(datetime.today(), timezone.get_current_timezone())
-            Screening.objects.create(cinema=nc, movie=m[0], date=dt + timedelta(randint(1,5)))
-            Screening.objects.create(cinema=nc, movie=m[1], date=dt + timedelta(randint(1,5)))
+            Screening.objects.create(cinema=nc, movie=self._random_movie(), date=dt + timedelta(randint(1,5)))
+            Screening.objects.create(cinema=nc, movie=self._random_movie(), date=dt + timedelta(randint(1,5)))
 
         Cinema.objects.create(name='kino ' + self.faker.word(), city=self.faker.city())
 
-            # random.randint filmy
 
-    def _random_movie(self):  #po co to???
+    def _random_movie(self):
         movies = Movie.objects.all()
         return movies[randint(0, len(movies) - 1)]
+
+    def random_cinema(self):
+        pass
 
     def _random_person(self):
         """Return a random Person object from db."""
@@ -87,7 +89,7 @@ class CinemaTestCase(APITestCase):
 
     def setUp(self):
         print('Test_1_Cinemas')
-        CinemaTestCase.fake_data._fake_cinema_db()
+        CinemaTestCase.fake_data._fake_cinema_db()  #self albo CinemaTestCase
         print(Person.objects.all())
         print(Movie.objects.all())
 
@@ -109,7 +111,6 @@ class CinemaTestCase(APITestCase):
         self.assertEqual(response.data['city'], c1.city)
         print('detail')
         print(c1)
-
 
 
     def test_add_cinema(self):
@@ -147,7 +148,7 @@ class CinemaTestCase(APITestCase):
         cinema_obj = Cinema.objects.get(id=1)
         self.assertEqual(cinema_obj.city, new_city)
         print('update')
-        print(cinema_obj.city)
+        print(cinema_obj.movies.all())
 
 
 
