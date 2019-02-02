@@ -15,3 +15,6 @@ class Movie(models.Model):
     director = models.ForeignKey(Person, related_name="movies_directed")
     year = models.SmallIntegerField()
     actors = models.ManyToManyField(Person, related_name="movies_cast")
+
+    def __str__(self):
+        return self.title
