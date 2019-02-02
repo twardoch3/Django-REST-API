@@ -12,7 +12,6 @@ class CinemaSerializer(serializers.ModelSerializer):
         fields = ('name', 'city', 'movies')
 
 
-
 class ScreeningSerializer(serializers.ModelSerializer):
     cinema = serializers.SlugRelatedField(slug_field='name', queryset=Cinema.objects.all())
     movie = serializers.HyperlinkedRelatedField(view_name='movie-detail', queryset=Movie.objects.all())
@@ -33,6 +32,16 @@ class Movies_30_days_Serializer(serializers.ModelSerializer):
     def get_movies(self, obj):
         dt = datetime.datetime.today()
         return [m.title for m in obj.movies.filter(screening__date__range=[dt, dt + datetime.timedelta(29)])]
+
+
+#version 2
+class Movies_30_days_SerializerVersion2(serializers.ModelSerializer):
+    #days30 = serializers.HyperlinkedRelatedField(many=True, view_name='movie-detail', read_only=True)
+    days30 = serializers.SlugRelatedField(many=True, slug_field='title', read_only=True)
+
+    class Meta:
+        model = Cinema
+        fields = ('name', 'city', 'days30')
 
 
 
