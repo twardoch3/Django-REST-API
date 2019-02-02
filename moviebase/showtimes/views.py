@@ -2,8 +2,7 @@ from django.shortcuts import render
 from .models import Cinema, Screening
 from .serializers import CinemaSerializer, ScreeningSerializer, Movies_30_days_Serializer, Movies_30_days_SerializerVersion2
 from rest_framework import generics, filters
-#usunac to potem
-from movielist.models import Movie
+
 
 
 class CinemaView(generics.RetrieveUpdateDestroyAPIView):
