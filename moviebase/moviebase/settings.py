@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'movielist',
     'showtimes',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -123,3 +124,11 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 APPEND_SLASH = False
+
+
+#DjangoFilterBackend
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
+}
+
