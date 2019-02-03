@@ -10,27 +10,31 @@ from django.utils import timezone
 class Faker_Temp_Data():
 
     faker = Faker("pl_PL")
+    dt = timezone.make_aware(datetime.today(), timezone.get_current_timezone())
 
-    def _fake_cinema_db(self):
+    def _fake_data_db(self):
         for _ in range(randint(5,10)):
             Person.objects.create(name=self.faker.name())
-        for _ in range(randint(5,10)):
+        for _ in range(randint(5,9)):
             self._create_fake_movie()
-        for _ in range(randint(2,5)):
-            nc = Cinema.objects.create(name='kino ' + self.faker.word(), city=self.faker.city())
-            dt = timezone.make_aware(datetime.today(), timezone.get_current_timezone())
+        for _ in range(randint(2,7)):
+            nc = Cinema.objects.create(name='kino ' + self.faker.word() + self.faker.word(), city=self.faker.city())
+            # nazwy kin nie powinny sie powtarzac
             movies = sample(list(Movie.objects.all()), randint(1,5))
             for m in movies:
-                Screening.objects.create(cinema=nc, movie=m, date=dt + timedelta(randint(1,5)))
+                Screening.objects.create(cinema=nc, movie=m, date=self.dt + timedelta(randint(1,5)))
         # no movies
         Cinema.objects.create(name='kino ' + self.faker.word(), city=self.faker.city())
+
 
     def _random_movie(self):
         movies = Movie.objects.all()
         return movies[randint(0, len(movies) - 1)]
 
-    def random_cinema(self):
-        pass
+    def _random_cinema(self):
+        cinemas = Cinema.objects.all()
+        return cinemas[randint(0, len(cinemas) - 1)]
+
 
     def _random_person(self):
         """Return a random Person object from db."""
@@ -71,7 +75,7 @@ class Faker_Temp_Data():
         #return new_movie
 
 
-    def _fake_cinema_json(self):
+    def _fake_cinema(self):
         new_cinema = {
             "name" : "Kino WWW",
             "city" : "Katowice"
@@ -79,6 +83,15 @@ class Faker_Temp_Data():
 
         return new_cinema
 
+    def _fake_screening(self):
+        new_screening = {
+            'date': '2019-02-10T14:33:02Z',
+            'movie': 'http://testserver/movies/{}/'.format(self._random_movie().pk)
+        }
+
+        new_screening['cinema'] = self._random_cinema().name
+
+        return new_screening
 
 
 class CinemaTestCase(APITestCase):
@@ -89,7 +102,7 @@ class CinemaTestCase(APITestCase):
 
     def setUp(self):
         print('Test_1_Cinemas')
-        CinemaTestCase.fake_data._fake_cinema_db()  #self albo CinemaTestCase
+        CinemaTestCase.fake_data._fake_data_db()  #self albo CinemaTestCase
         #print(Person.objects.all())
         #print(Movie.objects.all())
 
@@ -111,10 +124,9 @@ class CinemaTestCase(APITestCase):
         print('detail')
 
 
-
     def test_add_cinema(self):
         cinemas_before = Cinema.objects.count()
-        new_cinema = self.fake_data._fake_cinema_json()  #albo nazwa klasy
+        new_cinema = self.fake_data._fake_cinema()  #albo nazwa klasy
         response = self.client.post("/cinemas/", new_cinema, format='json')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Cinema.objects.count(), cinemas_before + 1)
@@ -151,8 +163,88 @@ class CinemaTestCase(APITestCase):
         print('404')
 
 
-# class ScreeningTestCase(APITestCase):
-#      pass
+class ScreeningTestCase(APITestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.fake_data = Faker_Temp_Data()
+
+    def setUp(self):
+        print('Test_1_Screening')
+        ScreeningTestCase.fake_data._fake_data_db()  # self albo CinemaTestCase
+        # print(Person.objects.all())
+        print('m=', Movie.objects.all().count())
+        #print(Screening.objects.all()[:3])
+        print('s=', Screening.objects.all().count())
+        print('c=', Cinema.objects.all().count())
+        print(Cinema.objects.all())
+        print('last=', Movie.objects.all().last().pk)
+
+    def test_get_screening_list(self):
+        response = self.client.get("/screening/", format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Screening.objects.count(), len(response.data))
+
+        print('get')
+
+
+    def test_get_screening_detail(self):
+        s1 = Screening.objects.get(pk=1)
+        response = self.client.get("/screening/1/", format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['cinema'], s1.cinema.name)
+        self.assertEqual(response.data['movie'][-2], str(s1.movie.pk))
+
+        dt = response.data['date'][:-1].replace('T', ' ')
+        self.assertIn(dt, str(s1.date))
+
+        print(response.data)
+        print('dt=',dt)
+        print(str(s1.date))
+        print('detail')
+
+    def test_add_screening(self):
+        screening_before = Screening.objects.count()
+        new_screening = self.fake_data._fake_screening()
+        response = self.client.post("/screening/", new_screening, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Screening.objects.count(), screening_before + 1)
+        for key, val in new_screening.items():
+            self.assertIn(key, response.data)
+            self.assertEqual(response.data[key], val)
+        print(response.data)
+        print(new_screening)
+        print('add')
+
+    def test_update_screening(self):
+        response = self.client.get("/screening/1/", {}, format='json')
+        screening_data = response.data
+        print(screening_data)
+        new_cinema = self.fake_data._random_cinema().name
+        print(new_cinema)
+        screening_data['cinema'] = new_cinema
+        response = self.client.patch("/screening/1/", screening_data, format='json')
+        self.assertEqual(response.status_code, 200)
+        screening_obj = Screening.objects.get(id=1)
+        self.assertEqual(screening_obj.cinema.name, new_cinema)
+        print('update')
+        print(screening_obj)
+
+
+    def test_non_existing_screening_404(self):
+        response = self.client.get("/screening/1000/", {}, format='json')
+        self.assertEqual(response.status_code, 404)
+        print('404')
+
+
+    def test_delete_screening(self):
+        response = self.client.delete("/screening/1/", {}, format='json')
+        self.assertEqual(response.status_code, 204)
+        screening_ids = [screening.pk for screening in Screening.objects.all()]
+        self.assertNotIn(1, screening_ids)
+        print('delete')
+
+
 
 
 
