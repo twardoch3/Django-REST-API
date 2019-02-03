@@ -22,7 +22,7 @@ class Faker_Temp_Data():
             # nazwy kin nie powinny sie powtarzac
             movies = sample(list(Movie.objects.all()), randint(1,5))
             for m in movies:
-                Screening.objects.create(cinema=nc, movie=m, date=self.dt + timedelta(randint(1,5)))
+                Screening.objects.create(cinema=nc, movie=m, date=self.dt + timedelta(randint(1,50)))
         # no movies
         Cinema.objects.create(name='kino ' + self.faker.word(), city=self.faker.city())
 
@@ -245,6 +245,39 @@ class ScreeningTestCase(APITestCase):
     @classmethod
     def tearDownClass(cls):
         print('Screening testing finished')
+
+
+class Movies_30days_TestCase(APITestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.fake_data = Faker_Temp_Data()
+
+    def setUp(self):
+        print('Test_30days_movies')
+        Movies_30days_TestCase.fake_data._fake_data_db()
+
+    def test_30days_movies(self):
+        response = self.client.get("/cinemas/30DaysMovies/", format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Cinema.objects.count(), len(response.data))
+        #print(list(response.data))
+        for c in response.data:
+            #print(c['name'])
+            for m in c['movies']:
+                movie = Movie.objects.get(title=m)
+                valid_dates = movie.screening_set.filter(date__range=[self.fake_data.dt, self.fake_data.dt + timedelta(29)])
+                self.assertTrue(valid_dates)
+        print('get')
+
+    @classmethod
+    def tearDownClass(cls):
+        print('30days movies testing finished')
+
+
+
+
+
 
 
 
