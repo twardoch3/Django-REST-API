@@ -101,7 +101,7 @@ class CinemaTestCase(APITestCase):
         cls.fake_data = Faker_Temp_Data()
 
     def setUp(self):
-        print('Test_1_Cinemas')
+        print('Test_Cinemas')
         CinemaTestCase.fake_data._fake_data_db()  #self albo CinemaTestCase
         #print(Person.objects.all())
         #print(Movie.objects.all())
@@ -162,6 +162,10 @@ class CinemaTestCase(APITestCase):
         self.assertEqual(response.status_code, 404)
         print('404')
 
+    @classmethod
+    def tearDownClass(cls):
+        print('Cinema testing finished')
+
 
 class ScreeningTestCase(APITestCase):
 
@@ -170,21 +174,18 @@ class ScreeningTestCase(APITestCase):
         cls.fake_data = Faker_Temp_Data()
 
     def setUp(self):
-        print('Test_1_Screening')
+        print('Test_Screening')
         ScreeningTestCase.fake_data._fake_data_db()  # self albo CinemaTestCase
-        # print(Person.objects.all())
         print('m=', Movie.objects.all().count())
         #print(Screening.objects.all()[:3])
         print('s=', Screening.objects.all().count())
         print('c=', Cinema.objects.all().count())
         print(Cinema.objects.all())
-        print('last=', Movie.objects.all().last().pk)
 
     def test_get_screening_list(self):
         response = self.client.get("/screening/", format='json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Screening.objects.count(), len(response.data))
-
         print('get')
 
 
@@ -194,13 +195,10 @@ class ScreeningTestCase(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['cinema'], s1.cinema.name)
         self.assertEqual(response.data['movie'][-2], str(s1.movie.pk))
-
         dt = response.data['date'][:-1].replace('T', ' ')
         self.assertIn(dt, str(s1.date))
-
         print(response.data)
         print('dt=',dt)
-        print(str(s1.date))
         print('detail')
 
     def test_add_screening(self):
@@ -244,7 +242,9 @@ class ScreeningTestCase(APITestCase):
         self.assertNotIn(1, screening_ids)
         print('delete')
 
-
+    @classmethod
+    def tearDownClass(cls):
+        print('Screening testing finished')
 
 
 
