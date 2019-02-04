@@ -181,7 +181,7 @@ class ScreeningTestCase(APITestCase):
         #print(Screening.objects.all()[:3])
         print('s=', Screening.objects.all().count())
         print('c=', Cinema.objects.all().count())
-        print(Cinema.objects.all())
+
 
     def test_get_screening_list(self):
         response = self.client.get("/screening/", format='json')
@@ -286,7 +286,6 @@ class FiltersTestCase(APITestCase):
     def setUp(self):
         print('Test_Filters')
         FiltersTestCase.fake_data._fake_data_db()
-        print(Cinema.objects.all())
 
 
     def test_filters_cinema_city(self):
