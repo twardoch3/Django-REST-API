@@ -19,11 +19,11 @@ Start a development Web server on the local machine with command:
 python manage.py runserver
 ```
 ### Usage Examples:
-Movies Endpoint (GET,POST):
+Movies Endpoint (GET, POST):
 ```
 http://127.0.0.1:8000/movies/
 ```
-Screening Endpoint (GET,POST):
+Screening Endpoint (GET, POST):
 ```
 http://127.0.0.1:8000/screening/
 ```
