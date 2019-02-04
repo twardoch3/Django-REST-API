@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Cinema, Screening
 from movielist.models import Movie
 import datetime
+from django.utils import timezone
 
 
 class CinemaSerializer(serializers.ModelSerializer):
@@ -30,7 +31,7 @@ class Movies_30_days_Serializer(serializers.ModelSerializer):
         fields = ['name', 'city', 'movies']
 
     def get_movies(self, obj):
-        dt = datetime.datetime.today()
+        dt = timezone.make_aware(datetime.datetime.today(), timezone.get_current_timezone())
         return [m.title for m in obj.movies.filter(screening__date__range=[dt, dt + datetime.timedelta(29)])]
 
 
