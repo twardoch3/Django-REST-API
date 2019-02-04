@@ -25,7 +25,7 @@ class Faker_Temp_Data():
                 Screening.objects.create(cinema=nc, movie=m, date=self.dt + timedelta(randint(1,50)))
         # no movies
         Cinema.objects.create(name='kino 1' + self.faker.word(), city=self.faker.city())
-        Cinema.objects.create(name='kino 2' + self.faker.word(), city=self.faker.city()) #uwaga sprawdzic tutaj!
+        Cinema.objects.create(name='kino 2' + self.faker.word(), city=self.faker.city())
 
 
     def _random_movie(self):
@@ -98,7 +98,7 @@ class Faker_Temp_Data():
 class CinemaTestCase(APITestCase):
 
     @classmethod
-    def setUpTestData(cls):
+    def setUpTestData(cls):   #!!
         cls.fake_data = Faker_Temp_Data()
 
     def setUp(self):
@@ -305,9 +305,7 @@ class FiltersTestCase(APITestCase):
         for s in response2.data:
             self.assertIn(s['cinema'], [c.name for c in Cinema.objects.filter(city=cinema_db.city)])
 
-        print(response2.data)
-        print(cinema_db.city)
-        print(cinema_db.name)
+        # print(response2.data)
 
         #cinema with no screening
         cinema_no_screening = Cinema.objects.filter(screening=None)[randint(0,1)]
@@ -318,7 +316,29 @@ class FiltersTestCase(APITestCase):
 
 
     def test_filters_movie_title(self):
-        pass
+        # non existing movie
+        url1 = "/screening/?movie__title={}".format('non_existing_movie')
+        response1 = self.client.get(url1, format='json')
+        self.assertEqual(response1.status_code, 200)
+        self.assertEqual(response1.data, [])
+        print(response1.data)
+
+        # movie in database
+        movie_db = self.fake_data._random_movie()
+        url2 = "/screening/?movie__title={}".format(movie_db.title)
+        response2 = self.client.get(url2, format='json')
+        print('movie in database')
+        print(response2.data)
+
+        self.assertEqual(response2.status_code, 200)
+        for s in response2.data:
+            self.assertIn(s['movie'][-2], [str(m.pk) for m in Movie.objects.filter(title=movie_db.title)])
+
+
+    @classmethod
+    def tearDownClass(cls):
+        print('Filters testing finished')
+
 
 
 
