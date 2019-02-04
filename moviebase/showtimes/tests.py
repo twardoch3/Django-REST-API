@@ -24,7 +24,8 @@ class Faker_Temp_Data():
             for m in movies:
                 Screening.objects.create(cinema=nc, movie=m, date=self.dt + timedelta(randint(1,50)))
         # no movies
-        Cinema.objects.create(name='kino ' + self.faker.word(), city=self.faker.city())
+        Cinema.objects.create(name='kino 1' + self.faker.word(), city=self.faker.city())
+        Cinema.objects.create(name='kino 2' + self.faker.word(), city=self.faker.city()) #uwaga sprawdzic tutaj!
 
 
     def _random_movie(self):
@@ -276,6 +277,48 @@ class Movies_30days_TestCase(APITestCase):
 
 
 
+class FiltersTestCase(APITestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.fake_data = Faker_Temp_Data()
+
+    def setUp(self):
+        print('Test_Filters')
+        FiltersTestCase.fake_data._fake_data_db()
+        print(Cinema.objects.all())
+
+
+    def test_filters_cinema_city(self):
+        # non existing city
+        url1 = "/screening/?cinema__city={}".format('non_existing_city')
+        response1 = self.client.get(url1, format='json')
+        self.assertEqual(response1.status_code, 200)
+        self.assertEqual(response1.data, [])
+        print(response1.data)
+
+        # cinema in database
+        cinema_db = self.fake_data._random_cinema()
+        url2 = "/screening/?cinema__city={}".format(cinema_db.city)
+        response2 = self.client.get(url2, format='json')
+        self.assertEqual(response2.status_code, 200)
+        for s in response2.data:
+            self.assertIn(s['cinema'], [c.name for c in Cinema.objects.filter(city=cinema_db.city)])
+
+        print(response2.data)
+        print(cinema_db.city)
+        print(cinema_db.name)
+
+        #cinema with no screening
+        cinema_no_screening = Cinema.objects.filter(screening=None)[randint(0,1)]
+        url3 = "/screening/?cinema__city={}".format(cinema_no_screening.city)
+        response3 = self.client.get(url3, format='json')
+        self.assertEqual(response3.status_code, 200)
+        self.assertEqual(response3.data, [])
+
+
+    def test_filters_movie_title(self):
+        pass
 
 
 
