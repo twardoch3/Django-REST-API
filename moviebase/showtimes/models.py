@@ -8,7 +8,7 @@ class Cinema(models.Model):
     movies = models.ManyToManyField(Movie, through='Screening', related_name='movie_in_cinema')
 
     def __str__(self):
-        return self.name
+        return self.name + ' - ' + self.city
 
     @property
     def days30(self):
@@ -22,7 +22,7 @@ class Screening(models.Model):
     date = models.DateTimeField()
 
     def __str__(self):
-        return self.date
+        return self.cinema.name +  ' - ' + self.movie.title + ' - ' + str(self.date)
 
 
 
